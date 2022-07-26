@@ -1,3 +1,6 @@
+# effectful-? (?)
+* Add `mapError`.
+
 # effectful-1.1.0.0 (2022-07-19)
 * Don't reset the `UnliftStrategy` to `SeqUnlift` inside the continuation of
   `withEffToIO`.
