@@ -1,3 +1,5 @@
+{-# LANGUAGE ImplicitParams #-}
+
 -- | The dynamically dispatched variant of the 'Error' effect.
 --
 -- /Note:/ unless you plan to change interpretations at runtime, it's
@@ -16,6 +18,7 @@ module Effectful.Error.Dynamic
   , catchError
   , handleError
   , tryError
+  , mapError
 
     -- * Re-exports
   , E.HasCallStack
@@ -88,3 +91,13 @@ tryError
   -- ^ The inner computation.
   -> Eff es (Either (E.CallStack, e) a)
 tryError m = (Right <$> m) `catchError` \es e -> pure $ Left (es, e)
+
+-- | Map over the type of error thrown. Executes the inner computation via
+-- "Effectful.Error.Static".
+mapError :: forall e e' es a. Error e' :> es => (e -> e') -> Eff (Error e ': es) a -> Eff es a
+mapError f m = do
+  r <- runError m
+  case r of
+    Right a -> pure a
+    Left (theCallStack, e) ->
+      let ?callStack = theCallStack in throwError $ f e

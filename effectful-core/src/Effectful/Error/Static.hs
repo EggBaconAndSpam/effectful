@@ -1,3 +1,5 @@
+{-# LANGUAGE ImplicitParams #-}
+
 -- | Support for handling errors of a particular type, i.e. checked exceptions.
 --
 -- The 'Error' effect is __not__ a general mechanism for handling regular
@@ -88,6 +90,7 @@ module Effectful.Error.Static
   , catchError
   , handleError
   , tryError
+  , mapError
 
   -- * Re-exports
   , HasCallStack
@@ -178,6 +181,15 @@ tryError
   -- ^ The inner computation.
   -> Eff es (Either (CallStack, e) a)
 tryError m = (Right <$> m) `catchError` \es e -> pure $ Left (es, e)
+
+-- | Map over the type of error thrown.
+mapError :: forall e e' es a. Error e' :> es => (e -> e') -> Eff (Error e ': es) a -> Eff es a
+mapError f m = do
+  r <- runError m
+  case r of
+    Right a -> pure a
+    Left (theCallStack, e) ->
+      let ?callStack = theCallStack in throwError $ f e
 
 ----------------------------------------
 -- Helpers
